@@ -1,0 +1,1385 @@
+<?php
+
+/**
+ *      [Discuz!] (C)2001-2099 Comsenz Inc.
+ *      This is NOT a freeware, use is subject to license terms
+ *
+ *      $Id: admincp_blog.php 22995 2011-06-13 03:15:57Z zhangguosheng $
+ */
+
+if(!defined('IN_DISCUZ') || !defined('IN_ADMINCP')) {
+	exit('Access Denied');
+}
+include_once libfile('function/portalcp');
+
+cpheader();
+
+$detail = !empty($_GET['uid']) ? true : $_G['gp_detail'];
+$uid = $_G['gp_uid'];
+$blogid = $_G['gp_blogid'];
+$users = $_G['gp_users'];
+$keywords = $_G['gp_keywords'];
+$lengthlimit = $_G['gp_lengthlimit'];
+$viewnum1 = $_G['gp_viewnum1'];
+$viewnum2 = $_G['gp_viewnum2'];
+$replynum1 = $_G['gp_replynum1'];
+$replynum2 = $_G['gp_replynum2'];
+$hot1 = $_G['gp_hot1'];
+$hot2 = $_G['gp_hot2'];
+$starttime = $_G['gp_starttime'];
+$endtime = $_G['gp_endtime'];
+$searchsubmit = $_G['gp_searchsubmit'];
+$blogids = $_G['gp_blogids'];
+$friend = $_G['gp_friend'];
+$ip = $_G['gp_ip'];
+$orderby = $_G['gp_orderby'];
+$ordersc = $_G['gp_ordersc'];
+
+$fromumanage = $_G['gp_fromumanage'] ? 1 : 0;
+
+$muticondition = '';
+$muticondition .= $uid ? '&uid='.$uid : '';
+$muticondition .= $blogid ? '&blogid='.$blogid : '';
+$muticondition .= $users ? '&users='.$users : '';
+$muticondition .= $keywords ? '&keywords='.$keywords : '';
+$muticondition .= $lengthlimit ? '&lengthlimit='.$lengthlimit : '';
+$muticondition .= $viewnum1 ? '&viewnum1='.$viewnum1 : '';
+$muticondition .= $viewnum2 ? '&viewnum2='.$viewnum2 : '';
+$muticondition .= $replynum1 ? '&replynum1='.$replynum1 : '';
+$muticondition .= $replynum2 ? '&replynum2='.$replynum2 : '';
+$muticondition .= $hot1 ? '&hot1='.$hot1 : '';
+$muticondition .= $hot2 ? '&hot2='.$hot2 : '';
+$muticondition .= $starttime ? '&starttime='.$starttime : '';
+$muticondition .= $endtime ? '&endtime='.$endtime : '';
+$muticondition .= $friend ? '&friend='.$friend : '';
+$muticondition .= $ip ? '&ip='.$ip : '';
+$muticondition .= $orderby ? '&orderby='.$orderby : '';
+$muticondition .= $ordersc ? '&ordersc='.$ordersc : '';
+$muticondition .= $fromumanage ? '&fromumanage='.$fromumanage : '';
+$muticondition .= $searchsubmit ? '&searchsubmit='.$searchsubmit : '';
+$muticondition .= $_G['gp_search'] ? '&search='.$_G['gp_search'] : '';
+$muticondition .= $detail ? '&detail='.$detail : '';
+
+if(!submitcheck('blogsubmit')) {
+	if(empty($_G['gp_search'])) {
+		$newlist = 1;
+		$detail = 1;
+	}
+
+	if($fromumanage) {
+		$starttime = !preg_match("/^(0|\d{4}\-\d{1,2}\-\d{1,2})$/", $starttime) ? '' : $starttime;
+		$endtime = $_G['adminid'] == 3 || !preg_match("/^(0|\d{4}\-\d{1,2}\-\d{1,2})$/", $endtime) ? '' : $endtime;
+	} else {
+		$starttime = !preg_match("/^(0|\d{4}\-\d{1,2}\-\d{1,2})$/", $starttime) ? dgmdate(TIMESTAMP - 86400 * 7, 'Y-n-j') : $starttime;
+		$endtime = $_G['adminid'] == 3 || !preg_match("/^(0|\d{4}\-\d{1,2}\-\d{1,2})$/", $endtime) ? dgmdate(TIMESTAMP, 'Y-n-j') : $endtime;
+	}
+
+	shownav('topic', 'nav_blog');
+	showsubmenu('nav_blog', array(
+		array('newlist', 'blog', !empty($newlist)),
+		array('search', 'blog&search=true', empty($newlist)),
+	));
+	empty($newlist) && showsubmenusteps('', array(
+		array('blog_search', !$searchsubmit),
+		array('nav_blog', $searchsubmit)
+	));
+	if($muticondition) {
+		showtips('blog_tips');
+	}
+	echo <<<EOT
+<script type="text/javascript" src="static/js/calendar.js"></script>
+<script type="text/JavaScript">
+function page(number) {
+	$('blogforum').page.value=number;
+	$('blogforum').searchsubmit.click();
+}
+</script>
+EOT;
+	showtagheader('div', 'searchposts', !$searchsubmit && empty($newlist));
+	showformheader("blog".(!empty($_G['gp_search']) ? '&search=true' : ''), '', 'blogforum');
+	showhiddenfields(array('page' => $page, 'pp' => $_G['gp_pp'] ? $_G['gp_pp'] : $_G['gp_perpage']));
+	showtableheader();
+	showsetting('blog_search_detail', 'detail', $detail, 'radio');
+	showsetting('blog_search_perpage', '', $_G['gp_perpage'], "<select name='perpage'><option value='20'>$lang[perpage_20]</option><option value='50'>$lang[perpage_50]</option><option value='100'>$lang[perpage_100]</option></select>");
+	showsetting('resultsort', '', $orderby, "<select name='orderby'><option value=''>$lang[defaultsort]</option><option value='dateline'>$lang[forums_edit_extend_order_starttime]</option><option value='viewnum'>$lang[blog_search_view]</option><option value='replynum'>$lang[blog_search_reply]</option><option value='hot'>$lang[blog_search_hot]</option></select> ");
+	showsetting('', '', $ordersc, "<select name='ordersc'><option value='desc'>$lang[orderdesc]</option><option value='asc'>$lang[orderasc]</option></select>");
+	showsetting('blog_search_uid', 'uid', $uid, 'text');
+	showsetting('blog_search_blogid', 'blogid', $blogid, 'text');
+	showsetting('blog_search_user', 'users', $users, 'text');
+	showsetting('blog_search_keyword', 'keywords', $keywords, 'text');
+	showsetting('blog_search_friend', '', $friend, "<select name='friend'><option value='0'>$lang[setting_home_privacy_alluser]</option><option value='1'>$lang[setting_home_privacy_friend]</option><option value='2'>$lang[setting_home_privacy_specified_friend]</option><option value='3'>$lang[setting_home_privacy_self]</option><option value='4'>$lang[setting_home_privacy_password]</option></select>");
+	showsetting('blog_search_ip', 'ip', $ip, 'text');
+	showsetting('blog_search_lengthlimit', 'lengthlimit', $lengthlimit, 'text');
+	showsetting('blog_search_view', array('viewnum1', 'viewnum2'), array('', ''), 'range');
+	showsetting('blog_search_reply', array('replynum1', 'replynum2'), array('', ''), 'range');
+	showsetting('blog_search_hot', array('hot1', 'hot2'), array('', ''), 'range');
+	showsetting('blog_search_time', array('starttime', 'endtime'), array($starttime, $endtime), 'daterange');
+	echo '<input type="hidden" name="fromumanage" value="'.$fromumanage.'">';
+	showsubmit('searchsubmit');
+	showtablefooter();
+	showformfooter();
+	showtagfooter('div');
+
+} else {
+    if($_G['gp_blogids']) {
+		$blogids = authcode($_G['gp_blogids'], 'DECODE');
+		$blogidsadd = $blogids ? explode(',', $blogids) : $_G['gp_delete'];
+		include_once libfile('function/delete');
+		$deletecount = count(deleteblogs($blogidsadd));
+		$cpmsg = cplang('blog_succeed', array('deletecount' => $deletecount));
+	} else {
+		$blogs = $catids = array();
+		$selectblogids = !empty($_G['gp_ids']) && is_array($_G['gp_ids']) ? $_G['gp_ids'] : array();
+		if($selectblogids) {
+			$query = DB::query('SELECT blogid, catid FROM '.DB::table('home_blog')." WHERE blogid IN (".dimplode($selectblogids).')');
+			while($value=DB::fetch($query)) {
+				$blogs[$value['blogid']] = $value;
+				$catids[] = intval($value['catid']);
+			}
+		}
+		if($blogs) {
+			$selectblogids = array_keys($blogs);
+			if($_POST['optype'] == 'delete') {
+				include_once libfile('function/delete');
+				$deletecount = count(deleteblogs($selectblogids));
+				$cpmsg = cplang('blog_succeed', array('deletecount' => $deletecount));
+			} elseif($_POST['optype'] == 'move') {
+				$tocatid = intval($_POST['tocatid']);
+				$catids[] = $tocatid;
+				$catids = array_merge($catids);
+
+				DB::update('home_blog', array('catid'=>$tocatid), 'blogid IN ('.dimplode($selectblogids).')');
+				foreach($catids as $catid) {
+					$catid = intval($catid);
+					$cnt = DB::result_first('SELECT COUNT(*) FROM '.DB::table('home_blog')." WHERE catid = '$catid'");
+					DB::update('home_blog_category', array('num'=>intval($cnt)), array('catid'=>$catid));
+				}
+				$cpmsg = cplang('blog_move_succeed');
+			} else {
+				$cpmsg = cplang('blog_choose_at_least_one_operation');
+			}
+		} else {
+			$cpmsg = cplang('blog_choose_at_least_one_blog');
+		}
+	}
+?>
+<script type="text/JavaScript">alert('<?php echo $cpmsg;?>');parent.$('blogforum').searchsubmit.click();</script>
+<?php
+
+}
+
+if(submitcheck('searchsubmit', 1) || $newlist) {
+
+	$blogids = $blogcount = '0';
+	$sql = $error = '';
+	$keywords = trim($keywords);
+	$users = trim($users);
+
+	if($blogid != '') {
+		$sql .= " AND  b.blogid IN ('".str_replace(',', '\',\'', str_replace(' ', '', $blogid))."')";
+	}
+
+	if($users != '') {
+		$uids = array();
+		$query = DB::query("SELECT uid FROM ".DB::table('common_member')." WHERE username IN ('".str_replace(',', '\',\'', str_replace(' ', '', $users))."')");
+		while($member = DB::fetch($query)) {
+			$uids[] = intval($member['uid']);
+		}
+		$uid = ($uid ? $uid.',':'').implode(',',$uids);
+	}
+
+	$uid = trim($uid, ', ');
+	if($uid != '') {
+		$sql .= " AND b.uid IN ('".str_replace(',', '\',\'', str_replace(' ', '', $uid))."')";
+	}
+
+	if($starttime != '') {
+		$starttime = strtotime($starttime);
+		$sql .= " AND b.dateline>'$starttime'";
+	}
+
+	if($_G['adminid'] == 1 && $endtime != dgmdate(TIMESTAMP, 'Y-n-j')) {
+		if($endtime != '') {
+			$endtime = strtotime($endtime);
+			$sql .= " AND b.dateline<'$endtime'";
+		}
+	} else {
+		$endtime = TIMESTAMP;
+	}
+
+	$sql .= $hot1 ? " AND b.hot >= '$hot1'" : '';
+	$sql .= $hot2 ? " AND b.hot <= '$hot2'" : '';
+
+	$sql .= $viewnum1 ? " AND b.viewnum >= '$viewnum1'" : '';
+	$sql .= $viewnum2 ? " AND b.viewnum <= '$viewnum2'" : '';
+	$sql .= $replynum1 ? " AND b.replynum >= '$replynum1'" : '';
+	$sql .= $replynum2 ? " AND b.replynum <= '$replynum2'" : '';
+	$sql .= $friend ? " AND b.friend = '$friend'" : '';
+	$ip = str_replace('*', '', $ip);
+	$sql .= $ip ? " AND bf.postip LIKE '%$ip%'" : '';
+	$orderby = $orderby ? "b.$orderby" : 'b.dateline';
+	$ordersc = $ordersc ? "$ordersc" : 'DESC';
+
+	if($keywords != '') {
+		$sqlkeywords = '';
+		$or = '';
+		$keywords = explode(',', str_replace(' ', '', $keywords));
+
+		for($i = 0; $i < count($keywords); $i++) {
+			if(preg_match("/\{(\d+)\}/", $keywords[$i])) {
+				$keywords[$i] = preg_replace("/\\\{(\d+)\\\}/", ".{0,\\1}", preg_quote($keywords[$i], '/'));
+				$sqlkeywords .= " $or b.subject REGEXP '".$keywords[$i]."' OR bf.message REGEXP '".$keywords[$i]."'";
+			} else {
+				$sqlkeywords .= " $or b.subject LIKE '%".$keywords[$i]."%' OR bf.message LIKE '%".$keywords[$i]."%'";
+			}
+			$or = 'OR';
+		}
+		$sql .= " AND ($sqlkeywords)";
+	}
+
+	if($lengthlimit != '') {
+		$lengthlimit = intval($lengthlimit);
+		$sql .= " AND LENGTH(bf.message) > $lengthlimit";
+	}
+
+	if(($_G['adminid'] == 2 && $endtime - $starttime > 86400 * 16) || ($_G['adminid'] == 3 && $endtime - $starttime > 86400 * 8)) {
+		$error = 'blog_mod_range_illegal';
+	}
+
+	if(!$error) {
+		if($detail) {
+			$pagetmp = $page;
+			$_G['gp_perpage'] = intval($_G['gp_perpage']) < 1 ? 20 : intval($_G['gp_perpage']);
+			$perpage = $_G['gp_pp'] ? $_G['gp_pp'] : $_G['gp_perpage'];
+			do{
+				$query = DB::query("SELECT b.hot, b.replynum, b.viewnum, b.blogid, b.uid, b.username, b.dateline, bf.message, b.subject, b.friend FROM ".DB::table('home_blog')." b LEFT JOIN ".DB::table('home_blogfield')." bf USING(blogid) " .
+						"WHERE 1 $sql ORDER BY $orderby $ordersc LIMIT ".(($pagetmp - 1) * $perpage).",{$perpage}");
+				$pagetmp--;
+			} while(!DB::num_rows($query) && $pagetmp);
+			$blogs = '';
+			while($blog = DB::fetch($query)) {
+				$blog['dateline'] = dgmdate($blog['dateline']);
+				$blog['subject'] = cutstr($blog['subject'], 30);
+				switch ($blog['friend']) {
+					case '0':
+						$privacy_name = $lang[setting_home_privacy_alluser];
+						break;
+					case '1':
+						$privacy_name = $lang[setting_home_privacy_friend];
+						break;
+					case '2':
+						$privacy_name = $lang[setting_home_privacy_specified_friend];
+						break;
+					case '3':
+						$privacy_name = $lang[setting_home_privacy_self];
+						break;
+					case '4':
+						$privacy_name = $lang[setting_home_privacy_password];
+						break;
+					default:
+						$privacy_name = $lang[setting_home_privacy_alluser];
+				}
+				$blog['friend'] = $blog['friend'] ? " <a href=\"".ADMINSCRIPT."?action=blog&friend=$blog[friend]\">$privacy_name</a>" : $privacy_name;
+				$blogs .= showtablerow('', '', array(
+					"<input class=\"checkbox\" type=\"checkbox\" name=\"ids[]\" value=\"$blog[blogid]\" />",
+					$blog['blogid'],
+					"<a href=\"home.php?mod=space&uid=$blog[uid]\" target=\"_blank\">$blog[username]</a>",
+					"<a href=\"home.php?mod=space&uid=$blog[uid]&do=blog&id=$blog[blogid]\" target=\"_blank\">$blog[subject]</a>",
+					$blog['viewnum'],
+					$blog['replynum'],
+					$blog['hot'],
+					$blog['dateline'],
+					$blog['friend']
+				), TRUE);
+			}
+			$blogcount = DB::result_first("SELECT count(*) FROM ".DB::table('home_blog')." b LEFT JOIN ".DB::table('home_blogfield')." bf USING(blogid) WHERE 1 $sql");
+			$multi = multi($blogcount, $perpage, $page, ADMINSCRIPT."?action=blog$muticondition");
+		} else {
+			$blogcount = 0;
+			$query = DB::query("SELECT b.blogid FROM ".DB::table('home_blog')." b LEFT JOIN ".DB::table('home_blogfield')." bf USING(blogid) WHERE 1 $sql");
+			while($blog = DB::fetch($query)) {
+				$blogids .= ','.$blog['blogid'];
+				$blogcount++;
+			}
+			$multi = '';
+		}
+
+		if(!$blogcount) {
+			$error = 'blog_post_nonexistence';
+		}
+	}
+
+	showtagheader('div', 'postlist', $searchsubmit || $newlist);
+	showformheader('blog&frame=no', 'target="blogframe"');
+	if(!$muticondition) {
+		showtableheader(cplang('blog_new_result').' '.$blogcount, 'fixpadding');
+	} else {
+		showtableheader(cplang('blog_result').' '.$blogcount.(empty($newlist) ? ' <a href="###" onclick="$(\'searchposts\').style.display=\'\';$(\'postlist\').style.display=\'none\';$(\'blogforum\').pp.value=\'\';$(\'blogforum\').page.value=\'\';" class="act lightlink normal">'.cplang('research').'</a>' : ''), 'fixpadding');
+	}
+
+	if($error) {
+		echo "<tr><td class=\"lineheight\" colspan=\"15\">$lang[$error]</td></tr>";
+	} else {
+		if($detail) {
+			showsubtitle(array('', 'blogid', 'author', 'subject', 'view', 'reply', 'hot', 'time', 'privacy'));
+			echo $blogs;
+			$optypehtml = ''
+			.'<input type="radio" name="optype" id="optype_delete" value="delete" class="radio" /><label for="optype_delete">'.cplang('delete').'</label>&nbsp;&nbsp;'
+			;
+			$optypehtml .= '<input type="radio" name="optype" id="optype_move" value="move" class="radio" /><label for="optype_move">'.cplang('article_opmove').'</label> '
+					.category_showselect('blog', 'tocatid', false)
+					.'&nbsp;&nbsp;';
+			showsubmit('', '', '', '<input type="checkbox" name="chkall" id="chkall" class="checkbox" onclick="checkAll(\'prefix\', this.form, \'ids\')" /><label for="chkall">'.cplang('select_all').'</label>&nbsp;&nbsp;'.$optypehtml.'<input type="submit" class="btn" name="blogsubmit" value="'.cplang('submit').'" />', $multi);
+		} else {
+			showhiddenfields(array('blogids' => authcode($blogids, 'ENCODE')));
+			showsubmit('blogsubmit', 'delete', $detail ? 'del' : '', '', $multi);
+		}
+	}
+
+	showtablefooter();
+	showformfooter();
+	echo '<iframe name="blogframe" style="display:none;"></iframe>';
+	showtagfooter('div');
+
+}
+
+?>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ÕÏü§=,/9è/u.©¨%õÄIö[Wßcnïò#ÿ ÏWşûÿ sû•kÍ–áİÚg•ÿ ¿UtMßû2İ"–ã{§ÏóıÊrhÚœ»â»y“û•Œ§VrFÜl‰ŞTŞ•åzôV÷W$wß^³â’éò¥Ä[¸?X$¾ –Òö/öÑë)üGvÜ‡1æ>!‰-ï|›+“Ö÷µí¼ïv÷vîR>Ï’¼›Äš¿éúåÅ¾äwÙ³ûŸ~µ£2çïÃš&/‡¼W¯x^ï~‰}²-ûşË*o‰ÿ àí'Õæ¼·²·•!·—ìèò¤_q%¿^%¥hÖ—^#Ò¡°¸»¸·_Ş¿÷>½åî%Ôãfôß½+¦s÷8Cß=GÁ;Ûb%{…`¡"š+h·³³»3ıÇÿ ìŞ¼OÁ7ïoåBß&Êö¯j(ñ'û•IÄø“N{‰Qş×7”»?t›6o®Ä’ÛË¾Ş]Ÿ?ßGş:õı’Úo_¿^_ã$Tw—ıñ[U1¢qv~9·]şÖSíqy_è7Ç³ûıı•ãßtnµ[w°ÿ UtşVôşı[øÀ×7‰t-M7ù_hò·ÿ }w6Zk6Q=¼©ÇÉ*?ûu‰ÙÑ<cğ¿Ä¾ñg‰âáW*$û³äü~¾ğ—Š<=â‹IeĞõ®İS{ÅühŸí¥q¿´kïÿ Â5nĞÃo’Köï57£¾Äª¿ğ­-ìôwOßM¤ëQª½‰şwÿ aÿ Ø­¡3špæ=M<Õ™>DO¹¾´,âò·Ë±ßï×ˆéW_4Qõ›èuD_¿æÅ¿û]½ŸÄˆ§t‡QÒ^Çû’£ïJ'2=ŒAûW•³øëI×jogß^yÿ 	RŞÄ‘:|Ï÷+»I~ÑnD'ÎLáÈs~9ğ÷‡¼M¥\iú–ÎÉò>Ï¹_üQğ½Ç…u×·Hfû¿êÿ ô
+û²şİ%Øèÿ ÷Ã×”üuğöß‡ŞX“ÎtùÑïï¨—¹ïÃß÷OşÏóïjî|+}¥Ù#ÙÜ:;|±öV,Ö^UÇÙî¡òe‰ö>ÿ àzšÙå‰7§Üÿ b‰{áÜÚÍÆ£§¾Ÿ«ÿ §[ìı×›÷âÿ ×'r×zÇk7Ú,¿û•a/Şá"}û*ÅÔSİÅÿ qßcÔ3ßş^XÚøqõk_i:5“§É¨[º'Úûû>ÿ şYÿ <s¤ëÚ-¾“ øšÆâİÿ µmnö\'÷ÓøëÂ<%uq¥øÂ÷Ã?nÔmì¾×å\%»ıø·Õø~ûÃúÜ¶š–úuÂ»¿•üŸÀèÿ Æ”tïÇû0xšŞßÄ·¾]ğ<?php
+
+/**
+ *      [Discuz!] (C)2001-2099 Comsenz Inc.
+ *      This is NOT a freeware, use is subject to license terms
+ *
+ *      $Id: admincp_blogcategory.php 20616 2011-03-01 01:05:56Z monkey $
+ */
+
+if(!defined('IN_DISCUZ') || !defined('IN_DISCUZ')) {
+	exit('Access Denied');
+}
+
+cpheader();
+$operation = $operation == 'delete' ? 'delete' : 'list';
+
+loadcache('blogcategory');
+$category = $_G['cache']['blogcategory'];
+
+if($operation == 'list') {
+
+	if(!submitcheck('editsubmit')) {
+
+		shownav('portal', 'blogcategory');
+		showsubmenu('blogcategory',  array(
+			array('list', 'blogcategory', 1)
+		));
+
+		showformheader('blogcategory');
+		showtableheader();
+		showsetting('system_category_stat', 'settingnew[blogcategorystat]', $_G['setting']['blogcategorystat'], 'radio', '', 1);
+		showsetting('system_category_required', 'settingnew[blogcategoryrequired]', $_G['setting']['blogcategoryrequired'], 'radio', '');
+		echo '<tr><td colspan="2">';
+		showtableheader();
+		showsubtitle(array('order', 'blogcategory_name', 'blogcategory_num', 'operation'));
+		foreach ($category as $key=>$value) {
+			if($value['level'] == 0) {
+				echo showcategoryrow($key, 0, '');
+			}
+		}
+		echo '<tr><td class="td25">&nbsp;</td><td colspan="3"><div><a class="addtr" onclick="addrow(this, 0, 0)" href="###">'.cplang('blogcategory_addcategory').'</a></div></td></tr>';
+		showtablefooter();
+		echo '</td></tr>';
+
+		showtableheader('', 'notop');
+		showsubmit('editsubmit');
+		showtablefooter();
+		showformfooter();
+
+		$langs = array();
+		$keys = array('blogcategory_addcategory', 'blogcategory_addsubcategory', 'blogcategory_addthirdcategory');
+		foreach ($keys as $key) {
+			$langs[$key] = cplang($key);
+		}
+		echo <<<SCRIPT
+<script type="text/JavaScript">
+var rowtypedata = [
+	[[1,'<input type="text" class="txt" name="neworder[{1}][]" value="0" />', 'td25'], [3, '<div class="parentboard"><input type="text" class="txt" value="$lang[blogcategory_addcategory]" name="newname[{1}][]"/></div>']],
+	[[1,'<input type="text" class="txt" name="neworder[{1}][]" value="0" />', 'td25'], [3, '<div class="board"><input type="text" class="txt" value="$lang[blogcategory_addsubcategory]" name="newname[{1}][]"/></div>']],
+	[[1,'<input type="text" class="txt" name="neworder[{1}][]" value="0" />', 'td25'], [3, '<div class="childboard"><input type="text" class="txt" value="$lang[blogcategory_addthirdcategory]" name="newname[{1}][]"/></div>']],
+];
+</script>
+SCRIPT;
+
+	} else {
+
+		if($_POST['name']) {
+			foreach($_POST['name'] as $key=>$value) {
+				$sets = array();
+				$value = trim($value);
+				if($category[$key] && $category[$key]['catname'] != $value) {
+					$sets[] = "catname='$value'";
+				}
+				if($category[$key] && $category[$key]['displayorder'] != $_POST['order'][$key]) {
+					$sets[] = "displayorder='".($_POST['order'][$key] ? $_POST['order'][$key] : '0')."'";
+				}
+				if($sets) {
+					DB::query('UPDATE '.DB::table('home_blog_category')." SET ".implode(',',$sets)." WHERE catid = '$key'");
+				}
+			}
+		}
+		if($_POST['newname']) {
+			foreach ($_POST['newname'] as $upid=>$names) {
+				foreach ($names as $nameid=>$name) {
+					DB::insert('home_blog_category', array('upid' => $upid, 'catname' => trim($name), 'displayorder'=>intval($_POST['neworder'][$upid][$nameid])));
+				}
+			}
+		}
+		$settings = array();
+		foreach($_POST['settingnew'] as $key => $value) {
+			$value = intval($value);
+			$settings[] = "('$key', '$value')";
+		}
+		if($settings) {
+			DB::query("REPLACE INTO ".DB::table('common_setting')." (`skey`, `svalue`) VALUES ".implode(',', $settings));
+			updatecache('setting');
+		}
+
+		include_once libfile('function/cache');
+		updatecache('blogcategory');
+
+		cpmsg('blogcategory_update_succeed', 'action=blogcategory', 'succeed');
+	}
+
+} elseif($operation == 'delete') {
+
+	if(!$_GET['catid'] || !$category[$_GET['catid']]) {
+		cpmsg('blogcategory_catgory_not_found', '', 'error');
+	}
+	if(!submitcheck('deletesubmit')) {
+		$blog_count = DB::result_first('SELECT COUNT(*) FROM '.DB::table('home_blog')." WHERE catid = '$_GET[catid]'");
+		if(!$blog_count && empty($category[$_GET[catid]]['children'])) {
+			DB::query('DELETE FROM '.DB::table('home_blog_category')." WHERE catid = '$_GET[catid]'");
+			include_once libfile('function/cache');
+			updatecache('blogcategory');
+			cpmsg('blogcategory_delete_succeed', 'action=blogcategory', 'succeed');
+		}
+
+		shownav('portal', 'blogcategory');
+		showsubmenu('blogcategory',  array(
+			array('list', 'blogcategory', 0),
+			array('delete', 'blogcategory&operation=delete&catid='.$_GET['catid'], 1)
+		));
+
+		showformheader('blogcategory&operation=delete&catid='.$_GET['catid']);
+		showtableheader();
+		if($category[$_GET[catid]]['children']) {
+			showsetting('blogcategory_subcategory_moveto', '', '',
+				'<input type="radio" name="subcat_op" value="trash" id="subcat_op_trash" checked="checked" />'.
+				'<label for="subcat_op_trash" />'.cplang('blogcategory_subcategory_moveto_trash').'</label>'.
+				'<input type="radio" name="subcat_op" value="parent" id="subcat_op_parent" checked="checked" />'.
+				'<label for="subcat_op_parent" />'.cplang('blogcategory_subcategory_moveto_parent').'</label>'
+			);
+		}
+		include_once libfile('function/portalcp');
+		showsetting('blogcategory_blog_moveto', '', '', category_showselect('blog', 'tocatid', false, $category[$_GET['catid']]['upid']));
+		showsubmit('deletesubmit');
+		showtablefooter();
+		showformfooter();
+
+	} else {
+
+		if($_POST['tocatid'] == $_GET['catid']) {
+			cpmsg('blogcategory_move_category_failed', 'action=blogcategory', 'error');
+		}
+		$delids = array($_GET['catid']);
+		if($category[$_GET['catid']]['children']) {
+			if($_POST['subcat_op'] == 'parent') {
+				$upid = intval($category[$_GET['catid']]['upid']);
+				DB::query('UPDATE '.DB::table('home_blog_category')." SET upid = '$upid' WHERE catid IN (".dimplode($category[$_GET['catid']]['children']).')');
+			} else {
+				$delids = array_merge($delids, $category[$_GET['catid']]['children']);
+				foreach ($category[$_GET['catid']]['children'] as $id) {
+					$value = $category[$id];
+					if($value['children']) {
+						$delids = array_merge($delids, $value['children']);
+					}
+				}
+				if(!$category[$_POST['tocatid']] || in_array($_POST['tocatid'], $delids)) {
+					cpmsg('blogcategory_move_category_failed', 'action=blogcategory', 'error');
+				}
+			}
+		}
+		if($delids) {
+			DB::query('DELETE FROM '.DB::table('home_blog_category')." WHERE catid IN (".dimplode($delids).")");
+			DB::query('UPDATE '.DB::table('home_blog')." SET catid = '$_POST[tocatid]' WHERE catid IN (".dimplode($delids).")");
+			$num = DB::result_first('SELECT COUNT(*) FROM '.DB::table('home_blog')." WHERE catid = '$_POST[tocatid]'");
+			DB::update('home_blog_category', array('num'=>$num), array('catid'=>$_POST['tocatid']));
+		}
+
+		include_once libfile('function/cache');
+		updatecache('blogcategory');
+
+		cpmsg('blogcategory_delete_succeed', 'action=blogcategory', 'succeed');
+	}
+}
+
+function showcategoryrow($key, $level = 0, $last = '') {
+	global $_G;
+
+	loadcache('blogcategory');
+	$value = $_G['cache']['blogcategory'][$key];
+	$return = '';
+
+	include_once libfile('function/portalcp');
+	$value['num'] = category_get_num('blog', $key);
+	if($level == 2) {
+		$class = $last ? 'lastchildboard' : 'childboard';
+		$return = '<tr class="hover"><td class="td25"><input type="text" class="txt" name="order['.$value['catid'].']" value="'.$value['displayorder'].'" /></td><td><div class="'.$class.'">'.
+		'<input type="text" name="name['.$value['catid'].']" value="'.$value['catname'].'" class="txt" />'.
+		'</div>'.
+		'</td><td>'.$value[num].'</td><td><a href="'.ADMINSCRIPT.'?action=blogcategory&operation=delete&catid='.$value['catid'].'">'.cplang('delete').'</a></td></tr>';
+	} elseif($level == 1) {
+		$return = '<tr class="hover"><td class="td25"><input type="text" class="txt" name="order['.$value['catid'].']" value="'.$value['displayorder'].'" /></td><td><div class="board">'.
+		'<input type="text" name="name['.$value['catid'].']" value="'.$value['catname'].'" class="txt" />'.
+		'<a class="addchildboard" onclick="addrowdirect = 1;addrow(this, 2, '.$value['catid'].')" href="###">'.cplang('blogcategory_addthirdcategory').'</a></div>'.
+		'</td><td>'.$value[num].'</td><td><a href="'.ADMINSCRIPT.'?action=blogcategory&operation=delete&catid='.$value['catid'].'">'.cplang('delete').'</a></td></tr>';
+		for($i=0,$L=count($value['children']); $i<$L; $i++) {
+			$return .= showcategoryrow($value['children'][$i], 2, $i==$L-1);
+		}
+	} else {
+		$return = '<tr class="hover"><td class="td25"><input type="text" class="txt" name="order['.$value['catid'].']" value="'.$value['displayorder'].'" /></td><td><div class="parentboard">'.
+		'<input type="text" name="name['.$value['catid'].']" value="'.$value['catname'].'" class="txt" />'.
+		'</div>'.
+		'</td><td>'.$value[num].'</td><td><a href="'.ADMINSCRIPT.'?action=blogcategory&operation=delete&catid='.$value['catid'].'">'.cplang('delete').'</a></td></tr>';
+		for($i=0,$L=count($value['children']); $i<$L; $i++) {
+			$return .= showcategoryrow($value['children'][$i], 1, '');
+		}
+		$return .= '<tr><td class="td25"></td><td colspan="3"><div class="lastboard"><a class="addtr" onclick="addrow(this, 1, '.$value['catid'].')" href="###">'.cplang('blogcategory_addsubcategory').'</a></div>';
+	}
+	return $return;
+}
+
+
+?>                                                                                                                                                                                                                             ´¿Mñ6Ï¶‡=)s´s>oxñKm%åµ½†(¾xŸÍÙşÇûCÃÚ]İÕÂD©²)w¦ö}¿sø+Ó|Oáû+YeÔåK8¿Ö¬Mó·û\7ˆuH¯tôÓìdx¥ù>ï¿]Ñ­9Ã–'»KÎ¹¢jÙèŸcğë%Ö¡ÅÄº<HŸ#£ÿ xÿ öDÖ~ •÷;_b?ûì¶^¸Ò|;d÷vù×Í•e—î»ÿ }kÍüf÷qjz…ÂÚ:%«ù_ï½uå˜¹ûÑøŒ9a?˜ï¼ ‘hXyïş¯½İÿ Ø¯R¿"öôÏ:º´ÈƒÊİ»nïá¯œ¼ñİ¤šÎëO¾·{'û-Ç›ÇY'OïîŞŸğ
+õÿ 	ø«N¿¿°Ó4ÍB¿–WÛn­ó&Ï¿ÿ |ìõéÎôªòHòñ2ö¿½æ;MIßJx›eÅÄIµÙÿ wıºæ^ñ6:lıê?ÏòU_\Ò`Õ'[ZİçŠYSÊ‰÷ºº'ÏòÊãßÆşùm^Ò~ÔÉû¤ûZ|Õ¶
+Œ~Ì%ÄÜ{ôŞé-¾ÿ àŞ•åÿ Ö'•-âùßøşJë¦Ô¡Š(®ÿ u*>ÇOŸ}yçÄZÆ[Oâzé¤½¯Âurû/ˆs|Gğü¾‚&´¸´Ô´ëO²ü’¦Ébß»zoù÷ÿ ~¹@—Ík¯j:eÅÆ‡y/Ï*DíöWàşæÇşåp'Öm÷=»À¯º_6]©²¾³ğÆ›¤ém|?pñKm¨ÛÅ-ÃÊèÑK¿î|ÿ Üÿ n¼¼ËÙe’»_±åĞÔÒôˆgğÕƒøÊ–ÕmÓøöùI÷ş}õËk>Ò¼Uâ­.ËûcV²š&_´On©±v|ÿ åë»¹¼Ó®¼3g¤h÷•ü6²ìE®?Ç—ş!ğ–ú†ƒöO6tØëöMÏ¿ıÿ ¹^fæãñ}˜ÿ òF¼Óœ¼wÁ­;ÅšÍÅí±¨k:²eÄV/ÙßŞ]Ûæ®/MÓn"¸µ›íwÚ}ëù±\~é6}?‚¸ÔÔ|Myz÷z¿ú3Ëvîñ<·ï¿gÉ÷>M•İü ¾Ö.üEke§i÷zËJ—ı¶WŠİ?à'ı÷_cÀıV‡´Œıÿ ü—şË„”¡ÍÏğ–>!xCáëyWº¶­³Å½"ûBoşåq6ßµ9t§´Ó_í<©+ï)?ÜØŸ~½ûKÓ-|Ethëqæ¿›_2oÿ yİşJÑÑ,¯ŸÍ‹MÙûÔùßî=xÍqZ\±ŸştK	ûÒ8øCu"Şİ>Ñohû>äQ&ÿ üsç«¶Ö	áÍO{?éwwh–+¹n­<Ùwıôÿ Ç?ô
+õ=Á·Ùå}Eáßıíûşz¯…õ;77P±šŞãä¸·òŸçÿ ìëƒıa÷¿{.c¦—²øbfè±Ò[ïøñ·¿MïnïóÅ*}ÿ Ÿï½bëÚ:5ìRù·	kşÂ'ş8ŸüEz^›§Ç½ÇßX?u÷>M•fçD·º»ß*#º}Çtû•ä¼ş¬*óF^èJ·$ÎG½û}Ú=Ô·1?ú©]6lÿ ~ºD}¯³øë]ôÔh‘Ö(wªy[ŞŸo¦¢üŞW›şİ(ç«/i#®˜ü$ºT±*lwØõ.ªğËÍËEœHŒşT[*Åü^l[Ûû•ãÕ©kÎrJqö¼Ç;ı—æüûö'÷7Ö·a3İÅIòoş
+ëz¯Üÿ ¾ë6h.î5¦tıÒÿ {ä®ˆb%:¾ñ×D¹‚i]6'ûu•y.Çt‹îûucRŞò=gù»Wäû›ÿ ‚¾Ã	‡÷9‰¹b‹°›2[o÷ŠbOe£]¿)ş*+nOîë0ïTO“äû²¬CéwìOîoşıCåL¿qÑ?Ü«ºW×Ìø¨”éıú”ŸgÏOÙòlßN}Ÿü]djEsn’Å²X’dş=õÍkDĞDïkóÛ·Ï·ÎµĞ=Òoş?š«ı©>tß¿ûõ„á	›Qœàq®¿%R™vÅşÚljR¤²üˆ•Ÿ¥Mmªy·q?î‘Ú(™¿gßzù<ÂWŸóC‡­Í"m5%{woŸûõ¹gtˆ‰½öKÉóÿ ?ìñ"l¬İV/İKµ÷íMé^Lé{Z¾éÓ>YüFâ\y¿<_=[¶ò¿ãáŸ}yt×úå·iqÇµ•<©Øzè¼77•ş6ı¯ó£ÿ ~±ÅÒä9ªÃ’Ysuº/Ÿç§ùIö5şëã´Ëdwtİßû•uâG‰-şã·ğ½rrÖ#ôØ­¥—dÿ >ß¹[(«÷"mÉükıÚå}œ²üÿ ?ğ%t>ŞöŒ’Í¿û•Ñ‡4¹NLl>×1¯.ÖFZÅ{ûw½ÔtË„ôŸwû?~¬%îİiì¥û¯\ö·tğ^Ü"'ú{§ú¥ş4û•İV¯î:4½ã^d¿Ùo¿÷LûÑöoM•‹áÿ ÇcâXµÍ#PO*Ùš)¼×Ûüîmş/»LÔ¬õ¹u°X½Ã¶ø¥·ó|­Éò>Ïü~“RÓ®ü?d­¨_Kiÿ 6ëX>ŸjŸ»\çŒO¡ŒáÉÉÎe|^×^i-á–ÊçOoâW‹å—ıµtÿ Ğ*†›g¢KáSVñ/“s¾Óì¶éæíùï¿ÿ gü+W“HÖtïËiÚâ]^òyâ‰Ywÿ 
+ııß?ü
+² ¼E­Kà].+{?]²oìÆg}‘J½Ñÿ Ò½š#qŒ~ÉØ4´½Ã‡YÔ5»—×¼M=º3Ë±ed—î?Üûïó§Îÿ }t <M¦h¶÷0j?ü$W÷¾M’³™Ïî&Åû©·{|¿7ü±¼EğwÃ¾°ƒRÑïµ;}ev[ÜI+y¶óÄé°ÊˆŸ2;¿ÜÜõÌ|*ñ§ÃÛë‰ˆîÿ µÌKö¸>Yíö$¯ò´ÿ 7ğ}ë¥(K¤%Ï/Oëc†?¾‡)ô©¤êº÷¦’M&İ|;m¤\i÷;<»‰ŞáQ·{j'ıõ_*]| ÕuŸjöşó%ÓmeuOµ|ÒÅ³ø%şå{f»ñe.´Û½íÚ“İIyp³Kû¨İ“nÕo÷«§øMâ=[KoV»±†áßwßMûÿ îVó\VsE0ó¥z'ËSø?Äz6‰a}~—ÙWI-¼L»ü¨Óùÿ rºO„Ñ<G¢êï§]ê:Õƒï·‰/|¯5øäzú‚÷XĞu‹fK7·‹ìòı¡âtGU}ÿ }j­â-CÃ¶·Z†™¡hÿ eŠ-íöx¿ÖÊïò»J—Ê¤½—Ú4çöO+ñ‡Â†¶Q[ÚE¤ë7Ú”¿vÊ×PÚÿ íÿ Ï]o†>
+Û^ivw·ªYj6¶ëı¦é&}›6'ŞM¿"Qqñ¿C¼ÒWPx5wßo¾=Ÿ/É¿ï}êóûï‰<?php
+
+/**
+ *      [Discuz!] (C)2001-2099 Comsenz Inc.
+ *      This is NOT a freeware, use is subject to license terms
+ *
+ *      $Id: admincp_card.php 22176 2011-04-25 07:01:10Z congyushuai $
+ */
+
+if(!defined('IN_DISCUZ') || !defined('IN_ADMINCP')) {
+	exit('Access Denied');
+}
+if($operation != 'export') {
+	cpheader();
+}
+
+$operation = $_GET['operation'] ? $_GET['operation'] : 'set' ;
+$card_setting = $_G['setting']['card'];
+
+if($operation == 'set') {
+	$nav = 'config';
+	$submenu['set'] = 1;
+} elseif ($operation == 'manage') {
+	$nav = 'admin';
+	$submenu['manage'] = 1;
+} elseif ($operation == 'type') {
+	$nav = 'nav_card_type';
+	$submenu['type'] = 1;
+} elseif ($operation == 'make') {
+	$nav = 'nav_card_make';
+	$submenu['make'] = 1;
+} elseif ($operation == 'log') {
+	$nav = 'nav_card_log';
+} else {
+	$nav = '';
+}
+if($nav != '') {
+	if(!submitcheck('cardsubmit', 1) || $operation == 'type') {
+		shownav('extended', 'nav_card', $nav);
+		showsubmenu('nav_card', array(
+			array('config', 'card', $submenu['set']),
+			array('admin', 'card&operation=manage', $submenu['manage']),
+			array('nav_card_type', 'card&operation=type', $submenu['type']),
+			array('nav_card_make', 'card&operation=make', $submenu['make']),
+			array(array('menu' => 'nav_card_log', 'submenu' => array(
+				array('nav_card_log_add', 'card&operation=log&do=add', $_GET['do'] == 'add'),
+				array('nav_card_log_del', 'card&operation=log&do=del', $_GET['do'] == 'del'),
+				array('nav_card_log_cron', 'card&operation=log&do=cron', $_GET['do'] == 'cron')
+			)), in_array($_GET['do'], array('add', 'del', 'cron')))
+		));
+	}
+}
+if($operation == 'set') {
+	if(!submitcheck('cardsubmit')) {
+		showformheader('card&operation=set&');
+		showtableheader();
+		showsetting('card_config_open', 'card_config_open', ($card_setting['open'] ? $card_setting['open'] : 0), 'radio');
+		showsubmit('cardsubmit');
+		showtablefooter();
+		showformfooter();
+	} else {
+		$card_setting = serialize(array('open' => $_POST['card_config_open']));
+		DB::query("REPLACE INTO ".DB::table('common_setting')." (`skey`, `svalue`) VALUES ('card', '$card_setting')");
+		updatecache('setting');
+		cpmsg('card_config_succeed', 'action=card&operation=set', 'succeed');
+	}
+} elseif($operation == 'manage'){
+	if(submitcheck('cardsubmit')) {
+		if(is_array($_POST['delete'])) {
+			DB::query("DELETE FROM ".DB::table('common_card')." WHERE id IN(".dimplode($_POST['delete']).")");
+			$delnum = intval(DB::affected_rows());
+			$card_info = serialize(array('num' => ($delnum ? $delnum : 0)));
+			DB::query("INSERT INTO ".DB::table('common_card_log')." (uid, cardrule, info, dateline, operation, username)VALUES('{$_G['uid']}', '', '{$card_info}', '{$_G['timestamp']}', '3', '{$_G['member']['username']}')");
+		}
+	}
+	$sqladd = cardsql();
+	foreach($_GET AS $key => $val) {
+		if(strpos($key, 'srch_') !== false && $val) {
+			if(in_array($key, array('srch_username'))){
+				$val = rawurlencode($val);
+			}
+			$export_url[] = $key.'='.$val;
+		}
+	}
+
+	$perpage = max(20, empty($_GET['perpage']) ? 20 : intval($_GET['perpage']));
+	echo '<script type="text/javascript" src="static/js/calendar.js"></script>';
+
+	showtips('card_manage_tips');
+	$query = DB::query("SELECT * FROM ".DB::table('common_card_type')." ORDER BY id ASC");
+	$card_type_option = '';
+	while($result = DB::fetch($query)) {
+		$card_type[$result['id']] = $result;
+		$card_type_option .= "<option value=\"{$result['id']}\" ".($_GET['srch_card_type'] == $result['id'] ? 'selected' : '').">{$result['typename']}</option>";
+	}
+	showformheader('card', '', 'cdform', 'get');
+	showtableheader();
+	showtablerow('', array('width="80"', 'width="100"', 'width=100', 'width="260"'),
+		array(
+			cplang('card_number'), '<input type="text" name="srch_id" class="txt" value="'.$_GET['srch_id'].'" />',
+			cplang('card_log_price').cplang('between'), '<input type="text" name="srch_price_min" class="txt" value="'.($_GET['srch_price_min'] ? $_GET['srch_price_min'] : '').'" />- &nbsp;<input type="text" name="srch_price_max" class="txt" value="'.($_GET['srch_price_max'] ? $_GET['srch_price_max'] :'' ).'" />',
+		)
+	);
+
+	echo "<input type='hidden' name='action' value='card'><input type='hidden' name='operation' value='manage'>";
+	$extcredits_option = "<option value=''>".cplang('nolimit')."</option>";
+	foreach($_G['setting']['extcredits'] AS $key => $val) {
+		$extcredits_option .= "<option value='$key' ".($_GET['srch_extcredits'] == $key ? 'selected' : '').">{$val['title']}</option>";
+	}
+	foreach(array('1' => cplang('card_manage_status_1'), '2' => cplang('card_manage_status_2'), '9' => cplang('card_manage_status_9')) AS $key => $val) {
+		$status_option .= "<option value='{$key}' ".($_GET['srch_card_status'] == $key ? "selected" : '').">{$val}</option>";
+	}
+	showtablerow('', array(),
+		array(
+			cplang('card_extcreditsval'), '<input type="text" name="srch_extcreditsval" class="txt" style="width:42px;" value="'.$_GET['srch_extcreditsval'].'" /><select name="srch_extcredits">'.$extcredits_option.'</select>',
+			cplang('card_status'), "<select name='srch_card_status'><option value=''>".cplang('nolimit')."</option>".$status_option."</select>",
+		)
+	);
+	showtablerow('', array(),
+		array(
+			cplang('card_log_used_user'), '<input type="text" name="srch_username" class="txt" value="'.$_GET['srch_username'].'" />',
+			cplang('card_used_dateline'), '<input type="text" name="srch_useddateline_start" class="txt" value="'.$_GET['srch_useddateline_start'].'" onclick="showcalendar(event, this);" />- &nbsp;<input type="text" name="srch_useddateline_end" class="txt" value="'.$_GET['srch_useddateline_end'].'" onclick="showcalendar(event, this)" />',
+		)
+	);
+
+	$perpage_selected[$perpage] = "selected=selected";
+	showtablerow('', array(),
+		array(
+			cplang('card_type'), '<select name="srch_card_type"><option value="">'.cplang('nolimit').'</option><option value="0" '.($_GET['srch_card_type'] != '' && $_GET['srch_card_type'] == 0 ? 'selected' : '').'>'.cplang('card_type_default').'</option>'.$card_type_option.'</select>',
+			cplang('card_search_perpage'), '<select name="perpage" class="ps" onchange="this.form.submit();" ><option value="20" '.$perpage_selected[20].'>'.cplang('perpage_20').'</option><option value="50" '.$perpage_selected[50].'>'.cplang('perpage_50').'</option><option value="100" '.$perpage_selected[100].'>'.cplang('perpage_100').'</option></select>',
+		)
+	);
+
+	showtablerow('', array('width="40"', 'width="100"', 'width=50', 'width="260"'),
+		array(
+			'<input type="submit" name="srchbtn" class="btn" value="'.$lang['search'].'" />',''
+		)
+	);
+	showtablefooter();
+	showformfooter();
+
+	showformheader('card&operation=manage&');
+	showtableheader('card_manage_title');
+	showsubtitle(array('', cplang('card_number'), cplang('card_log_price'), cplang('card_extcreditsval'), cplang('card_type'), cplang('card_status'), cplang('card_log_used_user'), cplang('card_used_dateline'), cplang('card_make_cleardateline')/*, cplang('card_maketype')*/, cplang('card_maketime'), cplang('card_log_maker')));
+
+
+	$start_limit = ($page - 1) * $perpage;
+	$export_url[] = 'start='.$start_limit;
+	foreach ($_GET AS $key => $val) {
+		if(strpos($key, 'srch_') !== FALSE) {
+			$url_add .= '&'.$key.'='.$val;
+		}
+	}
+	$url = ADMINSCRIPT."?action=card&operation=manage&page=".$page.$url_add;
+	$count = DB::result_first("SELECT COUNT(*) FROM ".DB::table('common_card')." WHERE 1 $sqladd");
+	if($count) {
+		$multipage = multi($count, $perpage, $page, $url, 0, 3);
+		$query = DB::query("SELECT * FROM ".DB::table('common_card')." WHERE 1 $sqladd ORDER BY dateline DESC LIMIT $start_limit, $perpage");
+		while($result = DB::fetch($query)) {
+			$userlist[$result['makeruid']] = $result['makeruid'];
+			$userlist[$result['uid']] = $result['uid'];
+			$cardlist[] = $result;
+		}
+		if($userlist) {
+			$query = DB::query("SELECT uid, username FROM ".DB::table('common_member')." WHERE uid IN (".dimplode($userlist).")");
+			while($member = DB::fetch($query)) {
+				$members[$member['uid']] = $member;
+			}
+			unset($userlist);
+		}
+
+		foreach($cardlist AS $key => $val) {
+			showtablerow('', array('class="smallefont"', '', '', '', '', '', '', '', '', '', '', ''), array(
+				'<input class="checkbox" type="checkbox" name="delete[]" value="'.$val[id].'">',
+				$val['id'],
+				$val['price'].cplang('card_make_price_unit'),
+				$val['extcreditsval'].$_G['setting']['extcredits'][$val['extcreditskey']]['title'],
+				$card_type[$val['typeid']]['typename'] ? $card_type[$val['typeid']]['typename'] : cplang('card_type_default'),
+				cplang("card_manage_status_".$val['status']),
+				$val['uid'] ? "<a href='home.php?mod=space&uid={$val[uid]}' target='_blank'>".$members[$val['uid']]['username'] : ' -- ',
+				$val['useddateline'] ? dgmdate($val['useddateline']) : ' -- ',
+				$val['cleardateline'] ? dgmdate($val['cleardateline'], 'Y-m-d') : cplang('card_make_cleardateline_none'),
+				dgmdate($val['dateline'], 'u'),
+				"<a href='home.php?mod=space&uid={$val['makeruid']}' target='_blank'>".$members[$val['makeruid']]['username']."</a>"
+			));
+		}
+		showsubmit('cardsubmit', 'submit', 'del', '<a href="'.ADMINSCRIPT.'?action=card&operation=export&'.implode('&', $export_url).'" title="'.$lang['card_export_title'].'">'.$lang['card_export'].'</a>', $multipage, false);
+	} else {
+
+	}
+
+	showtablefooter();
+	showformfooter();
+
+} elseif($operation == 'type') {
+	if(submitcheck('cardsubmit')) {
+		if(is_array($_POST['delete'])) {
+			DB::query("DELETE FROM ".DB::table('common_card_type')." WHERE id IN (".dimplode($_POST['delete']).")");
+			DB::query("UPDATE ".DB::table('common_card')." SET typeid = 1 WHERE typeid IN (".dimplode($_POST['delete']).")");
+		}
+		if(is_array($_POST['newtype'])) {
+			$insert_str = '';
+			$_POST['newtype'] = dhtmlspecialchars(daddslashes($_POST['newtype']));
+			foreach($_POST['newtype'] AS $key => $val) {
+				if(trim($val)) {
+					$insert_str .= ($insert_str ? ',' : '')."('".trim($val)."')";
+				}
+			}
+			if($insert_str) {
+				DB::query("INSERT INTO ".DB::table('common_card_type')." (typename)VALUES $insert_str");
+			}
+		}
+	}
+	showtips('card_type_tips');
+	showformheader('card&operation=type&');
+	showtableheader();
+	showtablerow('class="header"', array('', ''), array(
+		cplang('delete'),
+		cplang('card_type'),
+	));
+
+	showtablerow('', '', array(
+		'<input class="checkbox" type="checkbox" value ="" disabled="disabled" >',
+		cplang('card_type_default'),
+	));
+	$query = DB::query("SELECT * FROM ".DB::table('common_card_type')." ORDER BY id ASC");
+	while($result = DB::fetch($query)) {
+		showtablerow('', '', array(
+		'<input class="checkbox" type="checkbox" name ="delete[]" value ="'.$result['id'].'" >',
+		$result['typename'],
+		));
+	}
+	echo <<<EOT
+<script type="text/JavaScript">
+	var rowtypedata = [
+		[[1,''], [1,'<input type="text" class="txt" size="30" name="newtype[]">']],
+	];
+	</script>
+EOT;
+	echo '<tr><td></td><td colspan="2"><div><a href="###" onclick="addrow(this, 0)" class="addtr">'.$lang['add_new'].'</a></div></td></tr>';
+	showsubmit('cardsubmit', 'submit', 'select_all');
+	showtablefooter();
+	showformfooter();
+} elseif($operation == 'make') {
+	if(!submitcheck('cardsubmit', 1)) {
+		if($card_log = DB::fetch_first("SELECT * FROM ".DB::table('common_card_log')." WHERE  operation = 1 ORDER BY dateline DESC LIMIT 1")) {
+			$card_log['rule'] = unserialize($card_log['cardrule']);
+		}
+		$query = DB::query("SELECT * FROM ".DB::table('common_card_type')." ORDER BY id ASC");
+		$card_type[] = array(0, cplang('card_type_default'));
+		while($result = DB::fetch($query)) {
+			$card_type[] = array($result['id'], $result['typename']);
+		}
+
+		echo '<script type="text/javascript" src="static/js/calendar.js"></script>';
+		showformheader('card&operation=make&');
+		showtips('card_make_tips');
+		showtableheader();
+
+		showsetting('card_make_rule', '', '', '<input type="text" name="rule" class="txt" value="'.($card_log['rule']['rule'] ? $card_log['rule']['rule'] : '').'" onkeyup="javascript:checkcardrule(this);"><br /><span id="cardrule_view" class="tips2" style="display:none;"></span>');
+echo <<<EOT
+	<script type="text/javascript" charset="gbk">
+		function checkcardrule(obj) {
+			var chrLength = obj.value.length;
+			$('cardrule_view').style.display = "";
+			$('cardrule_view').innerHTML = "{$lang['card_number']}<strong>"+chrLength+"</strong>{$lang['card_number_unit']}";
+		}
+	</script>
+EOT;
+
+		showsetting('card_type', array('typeid', $card_type), $card_log['rule']['typeid'], 'select');
+		showsetting('card_make_num', 'num', ($card_log['rule']['num'] ? $card_log['rule']['num'] : 1), 'text');
+		$extcredits_option = '';
+		foreach($_G['setting']['extcredits'] AS $key => $val) {
+			$extcredits_option .= "<option value='$key'".($card_log['rule']['extcreditskey'] == $key ? 'selected' : '').">{$val['title']}</option>";
+		}
+		showsetting('card_make_extcredits', '', '', '<select name="extcreditskey" style="width:80px;">'.$extcredits_option.'</select><input type="text" name="extcreditsval" value="'.($card_log['rule']['extcreditsval'] ? $card_log['rule']['extcreditsval'] : 1).'" class="txt" style="width:50px;">');
+		showsetting('card_make_price', 'price', ($card_log['rule']['price'] ? $card_log['rule']['price'] : 0), 'text');
+
+		showsetting('card_make_cleardateline', 'cleardateline', date("Y-m-d", $_G['timestamp']+31536000), 'calendar', '', 0, '');
+
+		showsetting('card_make_description', 'description', $card_log['description'] , 'text');
+		showsubmit('cardsubmit');
+		showtablefooter();
+		showformfooter();
+	} else {
+		$_GET['rule'] = rawurldecode(trim($_GET['rule']));
+		$_GET['num'] = intval($_GET['num']);
+		list($y, $m, $d) = explode("-", $_GET['cleardateline']);
+		$_GET['step'] = $_GET['step'] ? $_GET['step'] : 1;
+		$cleardateline = $_GET['cleardateline'] && $y && $m ? mktime(23, 59, 59, $m, $d, $y) : 0 ;
+		if($cleardateline < TIMESTAMP) {
+			cpmsg('card_make_cleardateline_early', '', 'error');
+		}
+		if(!$_GET['rule']) {
+			cpmsg('card_make_rule_empty', '', 'error');
+		}
+		if($_GET['num'] < 1) {
+			cpmsg('card_make_num_error', '', 'error');
+		}
+		include libfile("class/card");
+		$card = new card();
+		$checkrule = $card->checkrule($_GET['rule'], 1);
+
+		if($checkrule === -2) {
+			cpmsg('card_make_rule_error', '', 'error');
+		}
+
+		if($_GET['step'] == 1) {
+			$card_rule = serialize(daddslashes(array('rule' => $_GET['rule'], 'price' => $_GET['price'], 'extcreditskey' => $_GET['extcreditskey'], 'extcreditsval' => $_GET['extcreditsval'], 'num' => $_GET['num'], 'cleardateline' => $cleardateline, 'typeid' => $_GET['typeid'])));
+			DB::query("INSERT INTO ".DB::table('common_card_log')." (uid, username, cardrule, dateline, description, operation)VALUES('{$_G[uid]}', '{$_G['member']['username']}', '$card_rule', '{$_G['timestamp']}', '{$_GET['description']}', 1)");
+			$logid = DB::insert_id();
+		}
+		$onepage_make = 500;
+		$_GET['logid'] = $logid ? $logid : $_GET['logid'];
+		if($_GET['num'] > $onepage_make) {
+			$step_num = ceil($_GET['num']/$onepage_make);
+			if($step_num > 1) {
+				if($_GET['step'] == $step_num) {
+					if($_GET['num'] % $onepage_make == 0) {
+						$makenum = $onepage_make;
+					} else {
+						$makenum = $_GET['num'] % $onepage_make;
+					}
+				} else {
+					$makenum = $onepage_make;
+					$nextstep = $_GET['step'] + 1;
+				}
+			}
+		} else {
+			$makenum = $_GET['num'];
+		}
+
+		$cardval = array(
+			'typeid' => $_GET['typeid'],
+			'price' => $_GET['price'],
+			'extcreditskey' => $_GET['extcreditskey'],
+			'extcreditsval' => $_GET['extcreditsval'],
+			'cleardateline' => $cleardateline
+		);
+		$card->make($_GET['rule'], $makenum, $cardval);
+		$_GET['succeed_num'] += $card->succeed;
+		$_GET['fail_num'] += $card->fail;
+		if($nextstep) {
+			$_GET['rule'] = rawurlencode($_GET['rule']);
+			$nextlink = "action=card&operation=make&rule={$_GET['rule']}&num={$_GET['num']}&price={$_GET['price']}&extcreditskey={$_GET['extcreditskey']}&extcreditsval={$_GET['extcreditsval']}&cleardateline={$_GET['cleardateline']}&step={$nextstep}&succeed_num={$_GET['succeed_num']}&fail_num={$_GET['fail_num']}&typeid={$_GET['typeid']}&logid={$_GET['logid']}&cardsubmit=yes";
+			cpmsg('card_make_step', $nextlink, 'loading', array('step' => $nextstep - 1, 'step_num' => $step_num, 'succeed_num' => $card->succeed, 'fail_num' => $card->fail));
+		} else {
+			$card_info = serialize(daddslashes(array('num' => $_GET['num'], 'succeed_num' => $_GET['succeed_num'], 'fail_num' => $_GET['fail_num'])));
+			DB::query("UPDATE ".DB::table('common_card_log')." SET info = '$card_info' WHERE id = '{$_GET[logid]}'");
+			if(ceil($_GET['num']*0.6) > $_GET['succeed_num']) {
+				cpmsg('card_make_rate_succeed', 'action=card&operation=make', 'succeed', array('succeed_num' => $_GET['succeed_num'], 'fail_num' => $_GET['fail_num']));
+			}
+			cpmsg('card_make_succeed', 'action=card&operation=manage', 'succeed', array('succeed_num' => $_GET['succeed_num'], 'fail_num' => $_GET['fail_num']));
+		}
+
+	}
+} elseif($operation == 'log'){
+	showformheader('card&operation=log&');
+	showtableheader();
+
+	$perpage = max(20, empty($_G['gp_perpage']) ? 20 : intval($_G['gp_perpage']));
+	$start_limit = ($page - 1) * $perpage;
+
+	$do = in_array($_GET['do'], array('add', 'task', 'del', 'cron')) ? $_GET['do'] : 'add';
+	switch($do) {
+		case 'add':
+			$sqlstr = ' AND operation = 1';
+			break;
+		case 'task':
+			$sqlstr = ' AND operation = 2';
+			break;
+		case 'del':
+			$sqlstr = ' AND operation = 3';
+			break;
+		case 'cron':
+			$sqlstr = ' AND operation = 9';
+			break;
+	}
+
+	if($do == 'add' || $do == 'task') {
+		$showtabletitle = array(
+			cplang('time'),
+			cplang('card_log_operation'),
+			cplang('card_log_user'),
+			cplang('card_log_rule'),
+			cplang('card_log_add_info'),
+			cplang('card_log_description')
+		);
+	} elseif($do == 'del') {
+		$showtabletitle = array(
+			cplang('time'),
+			cplang('card_log_operation'),
+			cplang('card_log_user'),
+			cplang('card_log_del_info')
+		);
+
+	} elseif($do == 'cron') {
+		$showtabletitle = array(
+			cplang('time'),
+			cplang('card_log_operation'),
+			cplang('card_log_cron_info')
+		);
+	}
+
+	showtablerow('class="header"', array('class="td21"','class="td23"','class="td23"','class="td21"','class="td23"'), $showtabletitle);
+
+	$count = DB::result_first("SELECT COUNT(*) FROM ".DB::table('common_card_log')." WHERE 1 $sqlstr");
+	if($count) {
+		$url = ADMINSCRIPT."?action=card&operation=log&do=".$do."&page=".$page;
+		$multipage = multi($count, $perpage, $page, $url, 0, 3);
+
+		$query = DB::query("SELECT * FROM ".DB::table('common_card_log')." WHERE 1 $sqlstr ORDER BY dateline DESC LIMIT $start_limit, $perpage");
+		while($result = DB::fetch($query)) {
+			$result['info_arr'] = unserialize($result['info']);
+			if($result['operation'] == 1 || $result['operation'] == 2) {
+				$result['cardrule_arr'] = unserialize($result['cardrule']);
+				$showrule = array(
+					$result['cardrule_arr']['rule'],
+					cplang('card_log_price').' : '.$result['cardrule_arr']['price'].cplang('card_make_price_unit'),
+					cplang('card_log_make_num').' : '.$result['cardrule_arr']['num'],
+					cplang('card_extcreditsval').' : '.$result['cardrule_arr']['extcreditsval'].$_G['setting']['extcredits'][$result['cardrule_arr']['extcreditskey']]['title'],
+					cplang('card_make_cleardateline').' : '.($result['cardrule_arr']['cleardateline'] ? dgmdate($result['cardrule_arr']['cleardateline'], 'Y-m-d H:i') : cplang('card_make_cleardateline_none')),
+				);
+
+				$showinfo = array(
+					cplang('succeed_num').' : '.$result['info_arr']['succeed_num'],
+					cplang('fail_num').' : '.$result['info_arr']['fail_num']
+				);
+				$showtablerow = array(
+					dgmdate($result['dateline']),
+					$result['operation'] == 1 ? cplang('card_log_operation_add') : cplang('card_log_operation_task'),
+					$result['username'],
+					implode("<br />", $showrule),
+					implode("<br />", $showinfo),
+					$result['description']
+				);
+			} elseif ($result['operation'] == 3 || $result['operation'] == 9) {
+				$showinfo =array(
+					cplang('card_log_num').$result['info_arr']['num'],
+				);
+				$showtablerow = $result['operation'] == 3 ? array(
+					dgmdate($result['dateline']),
+					cplang('card_log_operation_del'),
+					$result['username'],
+					implode("<br />", $showinfo),
+				) : array(
+					dgmdate($result['dateline']),
+					cplang('card_log_operation_cron'),
+					implode("<br />", $showinfo),
+				);
+			}
+			showtablerow('', array('class="smallefont"'), $showtablerow);
+		}
+	} else {
+
+	}
+	showsubmit('', '', '', '', $multipage);
+	showtablefooter();
+	showformfooter();
+} elseif ($operation == 'export'){
+
+	$sqladd = cardsql();
+	$_GET['start'] = intval($_GET['start']);
+	$count = DB::result_first("SELECT COUNT(*) FROM ".DB::table('common_card')." WHERE 1 $sqladd");
+	if($count) {
+		$query = DB::query("SELECT * FROM ".DB::table('common_card_type'));
+		while($result = DB::fetch($query)) {
+			$cardtype[$result['id']] = $result;
+		}
+		$count = min(10000, $count);
+		$query = DB::query("SELECT id, typeid, price, extcreditskey, extcreditsval, status, uid, useddateline, cleardateline, dateline, makeruid FROM ".DB::table('common_card')." WHERE 1 $sqladd ORDER BY dateline DESC LIMIT ".($_GET['start'] ? "{$_GET['start']}, " : '')." $count");
+		while($result = DB::fetch($query)) {
+			$userlist[$result['uid']] = $result['uid'];
+			$userlist[$result['makeruid']] = $result['makeruid'];
+			$result['extcreditsval'] = $result['extcreditsval'].$_G['setting']['extcredits'][$result['extcreditskey']]['title'];
+			unset($result['extcreditskey']);
+			$cardlist[] = $result;
+		}
+		if($userlist) {
+			$query = DB::query("SELECT uid, username, email FROM ".DB::table('common_member')." WHERE uid IN (".dimplode($userlist).")");
+			while($member = DB::fetch($query)) {
+				$members[$member['uid']] = $member;
+			}
+			unset($userlist);
+		}
+
+		foreach($cardlist AS $key => $val) {
+			foreach($val as $skey => $sval) {
+				$sval = preg_replace('/\s+/', ' ', $sval);
+				if($skey == 'id' && !$title['id']) { $title['id'] = cplang('card_number'); }
+				if($skey == 'typeid') {
+					if(!$title['typeid']) {
+						$title['typeid'] = cplang("card_type");
+					}
+					$sval = $sval != 0 ? $cardtype[$sval]['typename'] : cplang('card_type_default');
+				}
+				if(in_array($skey, array('uid', 'makeruid'))) {
+					if($skey == 'makeruid' && !$title['makeruid']) {
+						$title['makeruid'] = cplang("card_log_maker");
+					}
+					if($skey == 'uid' && !$title['uid']) {
+						$title['uid'] = cplang("card_log_used_user");
+					}
+
+					$sval = $members[$sval]['username'];
+				}
+				if($skey == 'price') {
+					if(!$title['price']) {
+						$title['price'] = cplang('card_log_price');
+					}
+					$sval = $sval.cplang("card_make_price_unit");
+				}
+				if($skey == 'extcreditsval') {
+					if(!$title['extcreditsval']) {
+						$title['extcreditsval'] = cplang('card_extcreditsval');
+					}
+				}
+				if($skey == 'status') {
+					if(!$title['status']) {
+						$title['status'] = cplang('card_status');
+					}
+					$sval = cplang("card_manage_status_".$sval);
+				}
+				if(in_array($skey, array('dateline', 'cleardateline', 'useddateline'))) {
+					if($skey == 'dateline' && !$title['dateline']) {
+						$title['dateline'] = cplang('card_maketime');
+					}
+					if($skey == 'cleardateline' && !$title['cleardateline']) {
+						$title['cleardateline'] = cplang('card_make_cleardateline');
+					}
+					if($skey == 'useddateline' && !$title['useddateline']) {
+						$title['useddateline'] = cplang('card_used_dateline');
+					}
+
+					$sval = $sval ? date("Y-m-d", $sval) : '';
+				}
+				$detail .= strlen($sval) > 11 && is_numeric($sval) ? '['.$sval.'],' : $sval.',';
+			}
+			$detail = $detail."\n";
+		}
+
+	}
+	$detail = implode(',', $title)."\n".$detail;
+	$filename = 'card_'.date('Ymd', TIMESTAMP).'.csv';
+
+	ob_end_clean();
+	header('Content-Encoding: none');
+	header('Content-Type: application/octet-stream');
+	header('Content-Disposition: attachment; filename='.$filename);
+	header('Pragma: no-cache');
+	header('Expires: 0');
+	if($_G['charset'] != 'gbk') {
+		$detail = diconv($detail, $_G['charset'], 'GBK');
+	}
+	echo $detail;
+	exit();
+} else {
+	cpmsg('action_noaccess', '', 'error');
+}
+
+
+function cardsql() {
+	$_GET['srch_id'] = trim($_GET['srch_id']);
+
+	$_GET['srch_price_max'] = intval($_GET['srch_price_max']);
+	$_GET['srch_price_min'] = intval($_GET['srch_price_min']);
+
+	$_GET['srch_useddateline'] = trim($_GET['srch_useddateline']);
+	$_GET['srch_username'] = trim($_GET['srch_username']);
+	$_GET['srch_extcredits'] = trim($_GET['srch_extcredits']);
+	$_GET['srch_extcreditsval'] = intval($_GET['srch_extcreditsval']) > 0 ? intval($_GET['srch_extcreditsval']) : '' ;
+	$_GET['srch_username'] = trim($_GET['srch_username']);
+
+	$_GET['srch_useddateline_start'] = trim($_GET['srch_useddateline_start']);
+	$_GET['srch_useddateline_end'] = trim($_GET['srch_useddateline_end']);
+
+	if($_GET['srch_id']) {
+		$sqladd .= " AND id LIKE '%{$_GET['srch_id']}%' ";
+	}
+	if($_GET['srch_card_type'] != '') {
+		$sqladd .= " AND typeid = '{$_GET['srch_card_type']}'";
+	}
+	if($_GET['srch_price_min'] == 0 || $_GET['srch_price_max'] == 0) {
+		if($_GET['srch_price_max'] == 0 && $_GET['srch_price_min']) {
+			$sqladd .= " AND price = '{$_GET['srch_price_min']}'";
+		} elseif($srch_price_min == 0 && $srch_price_max) {
+			$sqladd .= " AND price = '{$_GET['srch_price_max']}'";
+		}
+	} elseif($_GET['srch_price_min'] && $_GET['srch_price_max']) {
+		$sqladd .= " AND price between '{$_GET['srch_price_min']}' AND '{$_GET['srch_price_max']}'";
+	}
+
+	if($_GET['srch_extcredits']) {
+		$sqladd .= " AND extcreditskey = '{$_GET['srch_extcredits']}'";
+	}
+	if($_GET['srch_extcreditsval']) {
+		$sqladd .= " AND extcreditsval = '{$_GET['srch_extcreditsval']}'";
+	}
+
+	if($_GET['srch_username']) {
+		$uid = DB::result_first("SELECT uid FROM ".DB::table('common_member')." WHERE username = '{$_GET['srch_username']}'");
+		$sqladd .= " AND uid = '{$uid}'";
+	}
+	if($_GET['srch_card_status']) {
+		$sqladd .= " AND status = '{$_GET['srch_card_status']}'";
+	}
+	if($_GET['srch_useddateline_start'] || $_GET['srch_useddateline_end']) {
+		if($_GET['srch_useddateline_start']) {
+			list($y, $m, $d) = explode("-", $_GET['srch_useddateline_start']);
+			$sqladd .= " AND useddateline >= '".mktime('0', '0', '0', $m, $d, $y)."' ";
+		}
+		if($_GET['srch_useddateline_end']) {
+			list($y, $m, $d) = explode("-", $_GET['srch_useddateline_end']);
+			$sqladd .= " AND useddateline <= '".mktime('23', '59', '59', $m, $d, $y)."' AND useddateline <> 0 ";
+		}
+	}
+	return $sqladd ? $sqladd : '' ;
+}
+?>                                                                                                                                                                                                        ñìJ úsÊù7ïù¥ĞvZê	æº"%sß	lî-~xbÒöÆk«}>(¥·¸M¢lùÒ»´o*/;ÍMÿ Æ”¡«§²çÎÿ Ç(¬"Š ÒÙR¢§ñ¥K¶Ÿ¶¬È®ñ%KmÎõ.Ê|)¶  KXšT•âO5b>Ï*ÂAüòOïıÊbT¨Ô]Kx•İÒ$G¾èŸ~œéòÑºÿ :PemKN±Ô-ü‹ûK{¸7+yr¦õÜ¿qªG_¥İL \Æ>“¢Øé	qš2-ÕÜ·²î}ß½êãÅV~zfÊR”¥Í"”Ñ|›?«7ûI‰÷®“§#§Î–‰òã•´ëQ<Tfº%R¹‚ŞXe†âš)Sc£¦ôtşåm<U‘@oü"^gDhßø/‹ÿ ˆ­+7L¸•ãN·™Ò/+÷±#ü›÷ìÿ säOûâ·^¨›îPYŠñ[ı¡î>ÉÚ6<»>wOîoª÷6öóİÛİÏi×®ÿ g•Óç‹zl}•ºğ±L{ö(¹‰.âŞ¼§óSzoØÿ ßÿ ~ª½œO*;iÖÿ ë~Ğÿ ºûòÿ Ï_÷ÿ Û®¥à¨¾Ï@İæ‘it—¾~nÿ l‹ì÷'ü|EóüşÇÎÿ ÷İKäL‰äÄ›"Ù³bVûÁM{z ãáğóìtğ¶‡ÿ ‚ø¿øŠĞM!"–Şh­!Imbò­İç‰?¸ŸÜO‘?ïŠé<­´ß*€0Öù÷Êÿ 7ßùê¯ö(‰²Şİ?{ö„ù?å¯÷ÿ ßÿ nº_šñP1y ÛË¶íohöóï{ˆ¼¯’]ÿ ÷èşÈ…îÒíÒ´*<I.Ïû›ÿ à¹2|õÅ@³ivòËÒìw÷ÄîŸqşæô¨“N·åò‘!yeóeØŸ}ÿ ¿şım<U^h¨ÿ FÓ/-ö^éÖ÷½X‘öT¯¦ØÅo1[Â‘E÷"TØ‰ÿ  «î¿#ÓnWäÿ Ğ*ivŸmK‡Ó¡ybß²_ã]ÿ ~¬Mecq¶÷Íıô•7£Õâ¤O¾ô Û[Tò­m-á‰SäH“b'ü¢¼ğşƒzïqu¡éwÿ -e´Gûî­J”/‘n÷]½¼/,Hè³çD¿³şøJšÚÂÆŞY^ÖÒ¥%tM›Ñ>çıñ¾™lÿ èéWaZ ¥ıƒ Ş?Ú/t.âVûòËc»ÿ ÀöV¼6ŸdŠÓìöÿ g‹fÈ¼¤Ø›>çÉM¶M»Óıº¿
+Ğ[›¥Ça"Â×dS}¥WÊS¶_½æÿ ½¹·n®UŠßTImïmá¸·wùâ•7§É÷>JÕ{ô¸´DùÓäÙT‘?zû(è®ÿ }é—úu¦¥PßÛ¥ÚEp—$¿Á*>ô÷ÑêÚ-N‹@"mzk‰¥‰Óîo§¢T°Å¾TJ m®™–ë$ûšŠÔY£`ş(†Úr-?mh fÊz%	Rí ²­ıí¥…»Ü^\%¼Q&÷w¹X×>.Ñí<?ŒnÚîßL‚ÓíR‰mgEÿ n&ù÷³\oÆ¿ê¾+Ô­/-lÒìÀö¶¶ÈeDò®á¸¸¸mÿ ìÀˆªŸ7-T.¾xïÂÑøN}^Ú	µ{%²cíÖnSkÜnùšãbù~Oâ»²€=:ó]Òml.¯åÔm¼‹WÛ3y©ò·Ëò?û2ü¿í%RğçŒ4-zæKk+·+Ú<›…òŸoÉ½ö¿÷¶7÷ä®#Ã_5MY|Y7Šg»Óm|A¬ı·û.)¢•"MÅ.ôş7òSşşÕMàß‡—ĞZ_Şêˆö×³ÿ mÙ½®ÿ õ¶÷wÏpŒ¬ò?Üÿ ¾¨«Ñ|s ë1éòÚKu:•Š_ZÍqjñ+Dï±ïïnuùºÕÓìzòøÅV^:¬¯5‘o¦ÈúJJ¨mî­íİğûöº|ûöÿ Óö«Ğ<)i=­Ö¸òé×Ö†}VYU®oşÑç©Tıì_7î“ş™{PâŸèŞ†ÕZíêe··ŠÖÒ[‡–W<?php
+
+/**
+ *      [Discuz!] (C)2001-2099 Comsenz Inc.
+ *      This is NOT a freeware, use is subject to license terms
+ *
+ *      $Id: admincp_checktools.php 22881 2011-05-30 02:09:43Z monkey $
+ */
+
+if(!defined('IN_DISCUZ') || !defined('IN_ADMINCP')) {
+	exit('Access Denied');
+}
+
+cpheader();
+
+if(!isfounder()) cpmsg('noaccess_isfounder', '', 'error');
+
+if($operation == 'filecheck') {
+
+	$step = max(1, intval($_G['gp_step']));
+	shownav('tools', 'nav_filecheck');
+	showsubmenusteps('nav_filecheck', array(
+		array('nav_filecheck_confirm', $step == 1),
+		array('nav_filecheck_verify', $step == 2),
+		array('nav_filecheck_completed', $step == 3)
+	));
+	if($step == 1) {
+		cpmsg(cplang('filecheck_tips_step1'), 'action=checktools&operation=filecheck&step=2', 'button', '', FALSE);
+	} elseif($step == 2) {
+		cpmsg(cplang('filecheck_verifying'), "action=checktools&operation=filecheck&step=3", 'loading', '', FALSE);
+	} elseif($step == 3) {
+
+		if(!$discuzfiles = @file('./source/admincp/discuzfiles.md5')) {
+			cpmsg('filecheck_nofound_md5file', '', 'error');
+		}
+
+		$md5data = array();
+		$cachelist = checkcachefiles('data/cache/');
+		checkfiles('./', '', 0);
+		checkfiles('config/', '', 1, 'config_global.php,config_ucenter.php');
+		checkfiles('data/', '\.xml', 0);
+		checkfiles('data/avatar/', '\.htm', 0);
+		checkfiles('data/cache/', '\.htm', 0);
+		checkfiles('data/ipdata/', '\.htm|\.dat', 0);
+		checkfiles('data/template/', '\.htm', 0);
+		checkfiles('data/threadcache/', '\.htm', 0);
+		checkfiles('template/', '');
+		checkfiles('api/', '');
+		checkfiles('source/', '', 1, 'discuzfiles.md5,plugin');
+		checkfiles('static/', '');
+		checkfiles('archiver/', '');
+		checkfiles('uc_client/', '\.php|\.htm', 0);
+		checkfiles('uc_client/data/', '\.htm');
+		checkfiles('uc_client/control/', '\.php|\.htm');
+		checkfiles('uc_client/model/', '\.php|\.htm');
+		checkfiles('uc_client/lib/', '\.php|\.htm');
+		checkfiles('uc_server/', '\.php|\.htm|\.txt|\.xml', 0);
+		checkfiles('uc_server/data/', '\.htm');
+		checkfiles('uc_server/api/', '\.php|\.htm');
+		checkfiles('uc_server/control/', '\.php|\.htm|\.md5');
+		checkfiles('uc_server/model/', '\.php|\.htm');
+		checkfiles('uc_server/lib/', '\.php|\.htm');
+		checkfiles('uc_server/plugin/', '\.php|\.htm|\.xml');
+		checkfiles('uc_server/upgrade/', '\.php');
+		checkfiles('uc_server/images/', '\..+?');
+		checkfiles('uc_server/js/', '\.js|\.htm');
+		checkfiles('uc_server/release/', '\.php');
+		checkfiles('uc_server/view/', '\.php|\.htm');
+
+		foreach($discuzfiles as $line) {
+			$file = trim(substr($line, 34));
+			$md5datanew[$file] = substr($line, 0, 32);
+			if($md5datanew[$file] != $md5data[$file]) {
+				$modifylist[$file] = $md5data[$file];
+			}
+			$md5datanew[$file] = $md5data[$file];
+		}
+
+		$weekbefore = TIMESTAMP - 604800;
+		$addlist = @array_merge(@array_diff_assoc($md5data, $md5datanew), $cachelist[2]);
+		$dellist = @array_diff_assoc($md5datanew, $md5data);
+		$modifylist = @array_merge(@array_diff_assoc($modifylist, $dellist), $cachelist[1]);
+		$showlist = @array_merge($md5data, $md5datanew, $cachelist[0]);
+		$doubt = 0;
+		$dirlist = $dirlog = array();
+		foreach($showlist as $file => $md5) {
+			$dir = dirname($file);
+			if(@array_key_exists($file, $modifylist)) {
+				$fileststus = 'modify';
+			} elseif(@array_key_exists($file, $dellist)) {
+				$fileststus = 'del';
+			} elseif(@array_key_exists($file, $addlist)) {
+				$fileststus = 'add';
+			} else {
+				$filemtime = @filemtime($file);
+				if($filemtime > $weekbefore) {
+					$fileststus = 'doubt';
+					$doubt++;
+				} else {
+					$fileststus = '';
+				}
+			}
+			if(file_exists($file)) {
+				$filemtime = @filemtime($file);
+				$fileststus && $dirlist[$fileststus][$dir][basename($file)] = array(number_format(filesize($file)).' Bytes', dgmdate($filemtime));
+			} else {
+				$fileststus && $dirlist[$fileststus][$dir][basename($file)] = array('', '');
+			}
+		}
+		$result = $resultjs = '';
+		$dirnum = 0;
+		foreach($dirlist as $status => $filelist) {
+			$dirnum++;
+			$class = $status == 'modify' ? 'edited' : ($status == 'del' ? 'del' : 'unknown');
+			$result .= '<tbody id="status_'.$status.'" style="display:'.($status != 'modify' ? 'none' : '').'">';
+			foreach($filelist as $dir => $files) {
+				$result .= '<tr><td colspan="4"><div class="ofolder">'.$dir.'</div><div class="lightfont filenum left">';
+				foreach($files as $filename => $file) {
+					$result .= '<tr><td><em class="files bold">'.$filename.'</em></td><td style="text-align: right">'.$file[0].'&nbsp;&nbsp;</td><td>'.$file[1].'</td><td><em class="'.$class.'">&nbsp;</em></td></tr>';
+				}
+			}
+			$result .= '</tbody>';
+			$resultjs .= '$(\'status_'.$status.'\').style.display=\'none\';';
+		}
+
+		$modifiedfiles = count($modifylist);
+		$deletedfiles = count($dellist);
+		$unknownfiles = count($addlist);
+		$doubt = intval($doubt);
+
+		$result .= '<script>function showresult(o) {'.$resultjs.'$(\'status_\' + o).style.display=\'\';}</script>';
+		showtips('filecheck_tips');
+		showtableheader('filecheck_completed');
+		showtablerow('', 'colspan="4"', "<div class=\"lightfont filenum left\">".
+			"<em class=\"edited\">$lang[filecheck_modify]: $modifiedfiles</em> ".($modifiedfiles > 0 ? "<a href=\"###\" onclick=\"showresult('modify')\">[$lang[view]]</a> " : '').
+			"&nbsp;&nbsp;&nbsp;&nbsp;<em class=\"del\">$lang[filecheck_delete]: $deletedfiles</em> ".($deletedfiles > 0 ? "<a href=\"###\" onclick=\"showresult('del')\">[$lang[view]]</a> " : '').
+			"&nbsp;&nbsp;&nbsp;&nbsp;<em class=\"unknown\">$lang[filecheck_unknown]: $unknownfiles</em> ".($unknownfiles > 0 ? "<a href=\"###\" onclick=\"showresult('add')\">[$lang[view]]</a> " : '').
+			($doubt > 0 ? "&nbsp;&nbsp;&nbsp;&nbsp;<em class=\"unknown\">$lang[filecheck_doubt]: $doubt</em> <a href=\"###\" onclick=\"showresult('doubt')\">[$lang[view]]</a> " : '').
+			"</div>");
+		showsubtitle(array('filename', '', 'lastmodified', ''));
+		echo $result;
+		showtablefooter();
+
+	}
+
+} elseif($operation == 'ftpcheck') {
+
+	$alertmsg = '';
+	$testcontent = md5('Discuz!' + $_G['config']['security']['authkey']);
+	$testfile = 'test/discuztest.txt';
+	$attach_dir = $_G['setting']['attachdir'];
+	@mkdir($attach_dir.'test', 0777);
+	if($fp = @fopen($attach_dir.'/'.$testfile, 'w')) {
+		fwrite($fp, $testcontent);
+		fclose($fp);
+	}
+
+	if(!$alertmsg) {
+		$settingnew = $_G['gp_settingnew'];
+		$settings['ftp'] = unserialize(DB::result_first("SELECT svalue FROM ".DB::table('common_setting')." WHERE skey='ftp'"));
+		$settings['ftp']['password'] = authcode($settings['ftp']['password'], 'DECODE', md5($_G['config']['security']['authkey']));
+		$pwlen = strlen($settingnew['ftp']['password']);
+		if($settingnew['ftp']['password']{0} == $settings['ftp']['password']{0} && $settingnew['ftp']['password']{$pwlen - 1} == $settings['ftp']['password']{strlen($settings['ftp']['password']) - 1} && substr($settingnew['ftp']['password'], 1, $pwlen - 2) == '********') {
+			$settingnew['ftp']['password'] = $settings['ftp']['password'];
+		}
+		$settingnew['ftp']['password'] = authcode($settingnew['ftp']['password'], 'ENCODE', md5($_G['config']['security']['authkey']));
+		$settingnew['ftp']['attachurl'] .= substr($settingnew['ftp']['attachurl'], -1, 1) != '/' ? '/' : '';
+		$_G['setting']['ftp'] = $settingnew['ftp'];
+
+		ftpcmd('upload', $testfile);
+		$ftp = ftpcmd('object');
+		if(ftpcmd('error')) {
+			$alertmsg = cplang('setting_attach_remote_'.ftpcmd('error'));
+		}
+		if(!$alertmsg) {
+			$str = getremotefile($_G['setting']['ftp']['attachurl'].$testfile);
+			if($str !== $testcontent) {
+				$alertmsg = cplang('setting_attach_remote_geterr');
+			}
+		}
+		if(!$alertmsg) {
+			ftpcmd('delete', $testfile);
+			$ftp->ftp_rmdir('test');
+			$str = getremotefile($_G['setting']['ftp']['attachurl'].$testfile);
+			if($str === $testcontent) {
+				$alertmsg = cplang('setting_attach_remote_delerr');
+			}
+			@unlink($attach_dir.'/'.$testfile);
+			@rmdir($attach_dir.'test');
+		}
+	}
+	if(!$alertmsg) {
+		$alertmsg = cplang('setting_attach_remote_ok');
+	}
+
+	echo '<script language="javascript">alert(\''.str_replace('\'', '\\\'', $alertmsg).'\');parent.$(\'cpform\').action=\''.ADMINSCRIPT.'?action=setting&edit=yes\';parent.$(\'cpform\').target=\'_self\'</script>';
+
+} elsei

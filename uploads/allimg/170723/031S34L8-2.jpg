@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Content-Language" content="zh-cn" />
+	 
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+	<meta name="format-detection" content="telephone=no" />
+    <title>鸿彩网</title>
+    <link rel="shortcut icon" href="http://999.hcw99.com/public/desktop/login_tpl/hcwp/images/favicon.ico" />
+    <link href="http://999.hcw99.com/public/desktop/login_tpl/hcwp/css/register.min.css?ver=20170222145750" rel="stylesheet" type="text/css" />
+    <link href="http://999.hcw99.com/public/desktop/login_tpl/hcwp/css/font-awesome.min.css?ver=20170222145750" rel="stylesheet" type="text/css" />
+	<noscript>
+        <div class="noScript">
+            <div>
+            	<h2>请开启浏览器的Javascript功能</h2>
+                <p>亲，没它我们玩不转啊！求您了，开启Javascript吧！<br/>
+                不知道怎么开启Javascript？那就请<a href="http://www.baidu.com/s?wd=%E5%A6%82%E4%BD%95%E6%89%93%E5%BC%80Javascript%E5%8A%9F%E8%83%BD" rel="nofollow" target="_blank">猛击这里</a>！
+                </p>
+            </div>
+        </div>
+    </noscript>
+</head>
+<body>
+<div class="noScript hide" id="NoSupport_IE67">
+    <div>
+        <h2>不支援的浏览器</h2>
+        <p>亲，您的浏览器为ie内核浏览器，我们不支援IE6、IE7！<br/><br/>
+            <a href="" rel="nofollow" target="_blank">请猛击这里下载客户端</a>！
+        </p>
+    </div>
+</div><div class="container">
+    <div class="logo"></div>
+      <!--end logo-->
+    <div class="info-wrapper">
+        <h3>会员注册</h3>
+        <div class="tip-wrapper customer_bg">
+            <img src="http://999.hcw99.com/public/desktop/login_tpl/hcwp/images/register_girl_03.jpg" alt="" />
+            <br/>
+            <a href="javascript:;" class="client icons">
+                客户端下载
+                <span class="hide" id="windows">http://www.cdn9988.com:8088/hcwp/client_ap/setup.exe?1500751123.exe</span>
+                <span class="hide" id="ios">itms-services://?action=download-manifest&url=https://www.aa9988.net/hcwp/hcwp.plist</span>
+                <span class="hide" id="android">http://www.aa9988.net/hcwp/hcwp.apk</span>
+            </a>
+            <span class="webonlineservice icons">
+                <a href="http://999.hcw99.com/Login">在线客服</a>
+            </span>
+        </div>
+        <!--end tips-wrapper-->
+        <form class="register_form" id="register_form">
+            <input type="hidden" name="supportcode" value="33B879801333AE8693F7E4607E42F0B47DFF5DC9A0D222753DAF52296E7D0E5F" />
+            <dl>
+                <dd class="n-color">用户名：</dd>
+                <dt class="positionre">
+                    <input type="text" placeholder="请输入帐号" class="w100 required" name="account" >
+                </dt>
+                <dd class="n-color">密码：</dd>
+                <dt class="positionre">
+                    <input type="password" name="newpassword" id="password" class="w100 required" placeholder="请输入新密码">
+                </dt>
+                <dd class="n-color">确认密码：</dd>
+                <dt class="positionre">
+                    <input type="password" name="renewpassword" equalto="#password" class="w100 required" placeholder="请再次输入新密码">
+                </dt>
+                <dd class="n-color">验证码：</dd>
+                <dt class="positionre">
+                    <input type="text" maxlength="4" name="register_authnum" placeholder="验证码" class="w100 required number">
+                </dt>
+                <dd></dd>
+                <dt><img src="http://999.hcw99.com/Login/register_authnum"/></dt><br />
+                <dd></dd>
+                <dt><button type="button" id="Sreg-button">确认提交</button></dt>
+            </dl>
+        </form>
+    </div><!--end info-wrapper-->
+</div>	<script type="text/javascript">
+		var ddom = 'http://999.hcw99.com/';
+		var tpl_path = 'http://999.hcw99.com/public/desktop/login_tpl/hcwp/';
+		var sysConfig = {
+			LEASTPASS: 6,
+			MAXIMUMPASS: 20
+		}
+	</script>
+	<script src="http://999.hcw99.com/public/desktop/js/Regist.min.js?ver=20170704202259" type="text/javascript"></script>
+</body>
+</html>
